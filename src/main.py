@@ -13,14 +13,14 @@ except ImportError:
     os.system('pip install frida')
     sys.exit()
 import signal
- 
+
+
 def signal_handler(signal, frame):
     print('Ctrl + C! 退出')
     exitScript()
 
 
 signal.signal(signal.SIGINT, signal_handler)
-signal.signal(signal.SIGTERM, signal_handler)
 
 finished = threading.Event()
 root_path = os.path.dirname(__file__)
@@ -32,6 +32,7 @@ APP_JS = os.path.join(root_path, "js/agent.js")
 UI_JS = os.path.join(root_path, "js/ui.js")
 HOOK_JS = os.path.join(root_path, "js/hook.js")
 Modules_JS = os.path.join(root_path, "js/modules.js")
+Class_INFO_JS = os.path.join(root_path, "js/class_info.js")
 
 
 def get_usb_iphone():
@@ -41,10 +42,11 @@ def get_usb_iphone():
     def on_changed():
         changed.set()
     dManager.on('changed', on_changed)
-    
+
     device = None
     while device is None:
-        devices = [dev for dev in dManager.enumerate_devices() if dev.type == 'usb']
+        devices = [dev for dev in dManager.enumerate_devices()
+                                                             if dev.type == 'usb']
         if len(devices) == 0:
             print("等待USB设备连接.....")
             break
@@ -54,6 +56,8 @@ def get_usb_iphone():
     return device
 
 # 从js接受消息
+
+
 def on_message(message, data):
     if 'payload' in message:
         payload = message['payload']
@@ -87,11 +91,12 @@ def loadJsfile(session, filename):
     script.load()
     return script
 
+
 def help_info():
     print('''
  帮助信息:
  提示: 运行期间,应用需要处于前台状态
- 命令: 
+ 命令:
  -h :显示帮助信息
  -v :显示版本
  -F :附加到当前处于前台的应用
@@ -101,18 +106,21 @@ def help_info():
  -m :显示进程的模块信息
  -u :显示应用的UI层级
  -s :输出已加载模块的符号信息 后面需要添加模块名称
+ -c :类信息 二级命令: m方法 s符号 a地址 n 名称 q 退出
 
  带参数的命令:
  -s 命令带参数: 模块名称/all/all-no-0x0.
  -p: 小写p命令带参数, 进程的pid号
+ -c :后面跟模块名称, 找不到默认使用mainBundled的模块
  ''')
 
+
 def main():
- 
+
     # 获取USB设备
     global session
     device = get_usb_iphone()
-    
+
     if device:
         # print(f"获取到USB连接的设备： {device}")
         pass
@@ -128,12 +136,14 @@ def main():
     isRunHookJS = False
     isShowSymbolInfo = False
     module_name = ''
+    isShowClassInfo = False
+    class_module_name = ''
     try:
         opts, args = getopt.getopt(
-            sys.argv[1:], '-h-F-v-p:-P-i-m-u-s:', ['help', 'version'])
+            sys.argv[1:], '-h-F-v-p:-P-i-m-u-s:-c:', ['help', 'version'])
     except getopt.GetoptError as e:
         print(colorPrint(31, e))
-        print(colorPrint(37,"输入的命令有问题, 看下命令说明再试试:"))
+        print(colorPrint(37, "输入的命令有问题, 看下命令说明再试试:"))
         help_info()
         sys.exit()
     for opt_name, opt_value in opts:
@@ -168,6 +178,9 @@ def main():
         if opt_name in ('-s'):
             isShowSymbolInfo = True
             module_name = opt_value
+        if opt_name in ('-c'):
+            isShowClassInfo = True
+            class_module_name = opt_value
 
     # 进程名或者进程ID
     try:
@@ -190,7 +203,7 @@ def main():
         script = loadJsfile(session, Modules_JS);
         print(module_name)
         script.post(f's {module_name}')
-        finished.wait()   
+        finished.wait()
 
     elif isShowUIInfo:
         # 打印UI层级
@@ -199,6 +212,18 @@ def main():
             line = sys.stdin.readline()
             if not line:
                 break
+            script.post(line[:-1])
+    # 根据模块名,获取类信息
+    elif isShowClassInfo:
+        print(f"查找{class_module_name}的类信息")
+        script = loadJsfile(session, Class_INFO_JS)
+        script.post('c ' + class_module_name)
+        # finished.wait()
+        while True:
+            line = sys.stdin.readline()
+            if not line:
+                break
+            print(f'输入了内容: {line[:-1]}')
             script.post(line[:-1])
 
     elif isRunHookJS:
@@ -217,8 +242,8 @@ def exitScript():
 
 # 其他方法
 def deal_message(payload):
-    if 'meg' in payload:
-        print(colorPrint(31,payload['mes']))
+    if 'msg' in payload:
+        print(colorPrint(31,payload['msg']))
     if 'app' in payload:
         app = payload['app']
         lines = app.split('\n')
@@ -261,6 +286,9 @@ def deal_message(payload):
         address = payload_content['address']
         print(colorPrint(
             36, f'名称:{name: <40}\t地址:{address: <10}\t类型:{type: <20}\t'))
+    if 'cls' in payload:
+        print(payload['cls'])
+        finished.set()
 
 # 带颜色的打印 32 绿色
 def colorPrint(color, str):

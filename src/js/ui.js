@@ -20,12 +20,12 @@ function showViews() {
 
 // 处理终端输入过来的指令
 function handleMessage(message) {
-    var order = message.substring(0, 1)
-    var command = ''
-    switch(order) {
+    var parameter_1 = message.substring(0, 1)
+    var parameter_2 = ''
+    switch(parameter_1) {
         case 'n':
-            command = message.substring(2);
-            if (command.length == 0) {
+            parameter_2 = message.substring(2);
+            if (parameter_2.length == 0) {
                 send({ui_error: helpMessage()});
                 break;
             }
@@ -51,8 +51,8 @@ function handleMessage(message) {
             }
             break;
         case 'v':
-            command = message.substring(2);
-            if (command.length == 0) {
+            parameter_2 = message.substring(2);
+            if (parameter_2.length == 0) {
                 showViews();
             } else {
                 try {
