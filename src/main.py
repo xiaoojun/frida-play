@@ -189,7 +189,8 @@ def main():
         else:
             session = device.attach(process_name)
     except frida.ProcessNotFoundError as e:
-        print(f"异常信息: {e}")
+        if process_pid != 9999:
+            print(f"异常信息: {e}")
         help_info()
         sys.exit()
 
@@ -213,6 +214,7 @@ def main():
             if not line:
                 break
             script.post(line[:-1])
+            
     # 根据模块名,获取类信息
     elif isShowClassInfo:
         print(f"查找{class_module_name}的类信息")
@@ -257,14 +259,17 @@ def deal_message(payload):
         print(payload['finished'])
         finished.set()
         exitScript()
+
     if 'quit' in payload:
         print("退出脚本")
         exitScript()
 
     if 'ui' in payload:
         print(colorPrint(32, "视图信息\n" + payload['ui']))
+
     if 'ui_n' in payload:
         print(colorPrint(32, payload['ui_n']))
+
     if 'ui_error' in payload:
         print(colorPrint(31, payload['ui_error']))
 
