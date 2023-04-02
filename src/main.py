@@ -45,10 +45,8 @@ def get_usb_iphone():
 
     device = None
     while device is None:
-        devices = [dev for dev in dManager.enumerate_devices()
-                                                             if dev.type == 'usb']
+        devices = [dev for dev in dManager.enumerate_devices() if dev.type == 'usb']
         if len(devices) == 0:
-            print("等待USB设备连接.....")
             break
         else:
             device = devices[0]
@@ -116,18 +114,7 @@ def help_info():
 
 
 def main():
-
-    # 获取USB设备
-    global session
-    device = get_usb_iphone()
-
-    if device:
-        # print(f"获取到USB连接的设备： {device}")
-        pass
-    else:
-        print("请连接USB设备")
-        sys.exit()
-
+ 
     # 附加到指定的进程
     process_name = ''
     process_pid = 9999
@@ -146,6 +133,17 @@ def main():
         print(colorPrint(37, "输入的命令有问题, 看下命令说明再试试:"))
         help_info()
         sys.exit()
+
+    # 获取USB设备
+    global session
+    device = get_usb_iphone()
+    
+    if device is None:
+        print("请连接USB设备")
+        help_info()
+        sys.exit()
+
+    # 遍历参数
     for opt_name, opt_value in opts:
         if opt_name in ('-h', '--help'):
             help_info()
