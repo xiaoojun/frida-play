@@ -2,6 +2,10 @@
 ### 嘿嘿嘿
 ### iOS Frida
 ### [code](https://github.com/xiaoojun/frida-play.git) 
+### 安装方式
+```
+pip install frida-play
+```
 
 ``` python
  帮助信息:
