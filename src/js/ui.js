@@ -30,7 +30,7 @@ function handleMessage(message) {
                 break;
             }
             try {
-                var view = new ObjC.Object(ptr(command));
+                var view = new ObjC.Object(ptr(parameter_2));
             } catch {
                 send({ui_error: '无效地址'});
                 break;
@@ -56,7 +56,7 @@ function handleMessage(message) {
                 showViews();
             } else {
                 try {
-                    var view = new ObjC.Object(ptr(command));
+                    var view = new ObjC.Object(ptr(parameter_2));
                     const ui = view.recursiveDescription().toString();
                     send({ui : ui});
                 } catch {

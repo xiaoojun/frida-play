@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-VERSION = '0.0.2'
+VERSION = '0.0.4'
 
 setup(name='frida_play',
       version=VERSION,

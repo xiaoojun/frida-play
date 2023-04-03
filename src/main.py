@@ -27,6 +27,7 @@ root_path = os.path.dirname(__file__)
 
 global session
 session = 0
+VERSION= '0.0.4'
 
 APP_JS = os.path.join(root_path, "js/agent.js")
 UI_JS = os.path.join(root_path, "js/ui.js")
@@ -93,7 +94,10 @@ def loadJsfile(session, filename):
 def help_info():
     print('''
  帮助信息:
- 提示: 运行期间,应用需要处于前台状态
+ 提示: 
+ - 运行期间,应用需要处于前台状态
+ - 手机USB连接电脑
+ - 手机越狱环境, 且安装了frida插件
  命令:
  -h :显示帮助信息
  -v :显示版本
@@ -137,11 +141,6 @@ def main():
     # 获取USB设备
     global session
     device = get_usb_iphone()
-    
-    if device is None:
-        print("请连接USB设备")
-        help_info()
-        sys.exit()
 
     # 遍历参数
     for opt_name, opt_value in opts:
@@ -149,7 +148,7 @@ def main():
             help_info()
             sys.exit()
         if opt_name in ('-v', '--version'):
-            print("当前是0.0.1版本")
+            print(f"当前是{VERSION}版本")
             sys.exit()
         if opt_name in ('-P'):
             listRuningProcess()
@@ -157,11 +156,13 @@ def main():
         if opt_name in ('-p'):
             process_pid = opt_value
         if opt_name in ('-i'):
+            deviceStateCheck(device)
             session = device.attach('SpringBoard')
             script = loadJsfile(session, APP_JS)
             script.post({'cmd': 'installed'})
             finished.wait()
         if opt_name in ('-F'):
+            deviceStateCheck(device)
             application = device.get_frontmost_application()
             if not application:
                 print("没有前台应用")
@@ -180,6 +181,7 @@ def main():
             isShowClassInfo = True
             class_module_name = opt_value
 
+    deviceStateCheck(device)
     # 进程名或者进程ID
     try:
         if process_name == '':
@@ -231,6 +233,13 @@ def main():
         sys.stdin.read()
     else:
         help_info()
+
+# 设备状态检测
+def deviceStateCheck(device):
+    if device is None:
+        print("请连接USB设备")
+        help_info()
+        sys.exit()
 
 # 退出脚本
 def exitScript():
